@@ -4,8 +4,60 @@ from matplotlib.text import Text
 from matplotlib.widgets import TextBox
 from matplotlib.widgets import Button
 from matplotlib.table import Table
+import numpy as np
 
+   
 class solution_zone:
+    def draw_handler(self, evt):
+        self.fig.canvas.mpl_disconnect(self.draw_ref)
+       
+        # Getting the bottom right cell(the new coordinates of the axes)
+        cell_keys=self.tab.get_celld()
+        max_row_num=max(k[0] for k in cell_keys)
+        max_col_num=max(k[1] for k in cell_keys)
+        cell_xy=self.tab[max_row_num, max_col_num].xy
+        cell_width=self.tab[max_row_num, max_col_num].get_width()
+        cell_height=self.tab[max_row_num, max_col_num].get_height()
+        
+        # Getting the axes size in inches. 
+        x0_in_inches=self.figure_size[0]*self.axes_pos.x0
+        y0_in_inches=self.figure_size[1]*self.axes_pos.y0
+        x1_in_inches=self.figure_size[0]*self.axes_pos.x1
+        y1_in_inches=self.figure_size[1]*self.axes_pos.y1
+        width_in_inches=x1_in_inches-x0_in_inches
+        height_in_inches=y1_in_inches-y0_in_inches
+
+        y0=cell_xy[1]
+        x1=cell_xy[0]+cell_width
+
+        # Scaling the table
+        scale_x=1/x1
+        scale_y=1/(1-y0)
+        self.tab.scale(scale_x,scale_y)
+        self.ax.set_ylim(y0,1)
+        self.ax.set_xlim(0,x1)
+        
+        # New axes size in inchecs
+        new_axes_width_in_inches = self.figure_size[0]*x1
+        new_axes_height_in_inches = self.figure_size[1]*(1-y0)
+        
+        new_figure_width = 0.4+new_axes_width_in_inches
+        new_figure_height = 0.4+new_axes_height_in_inches
+        
+        relative_x0=0.2/new_figure_width
+        relative_y0=0.2/new_figure_height
+        relative_width=new_axes_width_in_inches/new_figure_width
+        relative_height=new_axes_height_in_inches/new_figure_height
+
+        
+        self.ax.set_position([relative_x0,
+                              relative_y0,
+                              relative_width, 
+                              relative_height])
+        self.fig.set_size_inches(new_figure_width, new_figure_height)
+        self.fig.canvas.draw()
+     
+        
     def print_in_row(self,text, row_num, col_num,edges):
         cur_col_num=col_num
         for strindex_to in range(len(text),0,-2):
@@ -18,23 +70,18 @@ class solution_zone:
             cell=self.tab.add_cell(row_num,cur_col_num,width=0.1,height=0.025,
                                    text=cell_text,loc='right')
             cell.visible_edges=edges
-            if cur_col_num==1:
-                cell.PAD=0.25
-            else:
-                cell.PAD=0.2
+            cell.PAD = 0.25 if cur_col_num==1 else 0.2
             cur_col_num-=1
             
     def create_sidebar_str(self,sidebar_value,col_num):
         sidebar_str=str(sidebar_value)
         if self.dec_point_col==-1:
             return sidebar_str
-        print('Sidebar_str:' + sidebar_str)
         if col_num<self.dec_point_col:
             return sidebar_str
         if col_num==self.dec_point_col:
             return sidebar_str+'.'
         after_point_digits=col_num-self.dec_point_col
-        print ('After Point: ' + str(after_point_digits));
         sidebar_orig_len=len(sidebar_str)
         if sidebar_orig_len<after_point_digits:
             ret_value='0.' + '0'*(after_point_digits-sidebar_orig_len+1)+\
@@ -52,10 +99,7 @@ class solution_zone:
         operand_len = len(self.operand_str)
         strindex_from=0
         # Will the first cell contain one digits or 2?
-        if operand_len&1:
-            strindex_to=1
-        else:
-            strindex_to=2
+        strindex_to=1 if operand_len&1 else 2
             
         result=0
         col_num=1
@@ -67,7 +111,6 @@ class solution_zone:
             remainder_str+=self.operand_str[strindex_from:strindex_to]
             remainder=int(remainder_str)
             if(row_num>2):
-                print(str(row_num)+":"+remainder_str)
                 self.print_in_row(remainder_str,row_num,col_num,'')
                 row_num+=1
             twenty_result=20*result
@@ -78,7 +121,7 @@ class solution_zone:
                 if prod<=remainder:
                     break
             sidebar_str=self.create_sidebar_str(sidebar_value,col_num)
-            cell=self.tab.add_cell(row_num,0,width=0.1,height=0.01,
+            cell=self.tab.add_cell(row_num,0,width=0.1,height=0.02,
                                    text=sidebar_str,loc='right')
             cell.visible_edges='R'
             #cell.PAD=0.1
@@ -90,10 +133,7 @@ class solution_zone:
             cell=self.tab.add_cell(0,col_num,width=0.1,height=0.025,text=digit_str,
                                    loc='right')
             cell.visible_edges=''
-            if col_num==1:
-                cell.PAD=0.25
-            else:
-                cell.PAD=0.2
+            cell.PAD=0.25 if col_num==1 else 0.2
             self.print_in_row(str(prod),row_num,col_num,'B')
             row_num+=1
 
@@ -151,14 +191,20 @@ class solution_zone:
         self.operand_str=self.before_point + self.after_point
         
         self.fig,self.ax=plt.subplots()
+
         self.ax.set_axis_off()
-        self.fig.set_size_inches(10,20)
-        self.tab=Table(self.ax,loc='upper left')
-        
+        self.fig.set_size_inches(10,10)
+        self.axes_pos=self.ax.get_position()
+        self.figure_size=self.fig.get_size_inches()
+        self.tab=Table(self.ax,loc='upper left',in_layout=True)
+        self.tab.AXESPAD=0
+
         self.print_radical_line()
         self.long_division()
 
         self.ax.add_table(self.tab)
+        self.draw_ref=self.fig.canvas.mpl_connect('draw_event',self.draw_handler)
+
         plt.show()
 
 import re
@@ -192,7 +238,7 @@ class numeric_field:
 class input_zone:
 
     def click_func(self,evt):
-        solution_zone(self.num_tb,self.prec_tb)
+        self.sz=solution_zone(self.num_tb,self.prec_tb)
 
     def __init__(self):
         self.fig,self.ax=plt.subplots(nrows=3)
@@ -207,7 +253,6 @@ class input_zone:
         plt.show()
 
         
-
 input_zone();
 
 
