@@ -1,4 +1,4 @@
-# SquareRootCalculator
+# Square Root Calculator
 A Matplotlib based tool that calculaes a square root using the pen-and-paper "long-division" method.
 
 This program uses Python 3.6 and Matplotlib 3.11
