@@ -18,7 +18,6 @@ class solution_zone:
         cell_xy=self.tab[max_row_num, max_col_num].xy
         cell_width=self.tab[max_row_num, max_col_num].get_width()
         cell_height=self.tab[max_row_num, max_col_num].get_height()
-        
         # Getting the axes size in inches. 
         x0_in_inches=self.figure_size[0]*self.axes_pos.x0
         y0_in_inches=self.figure_size[1]*self.axes_pos.y0
@@ -38,8 +37,8 @@ class solution_zone:
         self.ax.set_xlim(0,x1)
         
         # New axes size in inchecs
-        new_axes_width_in_inches = self.figure_size[0]*x1
-        new_axes_height_in_inches = self.figure_size[1]*(1-y0)
+        new_axes_width_in_inches = width_in_inches*x1
+        new_axes_height_in_inches = height_in_inches*(1-y0)
         
         new_figure_width = 0.4+new_axes_width_in_inches
         new_figure_height = 0.4+new_axes_height_in_inches
@@ -206,7 +205,6 @@ class solution_zone:
         self.draw_ref=self.fig.canvas.mpl_connect('draw_event',self.draw_handler)
 
         plt.show()
-
 import re
 class numeric_field:
     def __init__(self, inp_ax, label, regexp, maxlen, decpoint=None):
