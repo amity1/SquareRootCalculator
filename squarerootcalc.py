@@ -28,13 +28,6 @@ class solution_zone:
 
         y0=cell_xy[1]
         x1=cell_xy[0]+cell_width
-
-        # Scaling the table
-        scale_x=1/x1
-        scale_y=1/(1-y0)
-        self.tab.scale(scale_x,scale_y)
-        self.ax.set_ylim(y0,1)
-        self.ax.set_xlim(0,x1)
         
         # New axes size in inchecs
         new_axes_width_in_inches = width_in_inches*x1
@@ -42,6 +35,7 @@ class solution_zone:
         
         new_figure_width = 0.4+new_axes_width_in_inches
         new_figure_height = 0.4+new_axes_height_in_inches
+        self.fig.set_size_inches(new_figure_width, new_figure_height)
         
         relative_x0=0.2/new_figure_width
         relative_y0=0.2/new_figure_height
@@ -49,11 +43,18 @@ class solution_zone:
         relative_height=new_axes_height_in_inches/new_figure_height
 
         
+        
         self.ax.set_position([relative_x0,
                               relative_y0,
                               relative_width, 
                               relative_height])
-        self.fig.set_size_inches(new_figure_width, new_figure_height)
+
+        # Scaling the table
+        self.ax.set_ylim(y0,1)
+        self.ax.set_xlim(0,x1)
+        scale_x=1/x1
+        scale_y=1/(1-y0)
+        self.tab.scale(scale_x,scale_y)
         self.fig.canvas.draw()
      
         
@@ -188,10 +189,11 @@ class solution_zone:
         if (prec.val and 2*int(prec.val)>len(self.after_point)):
             self.after_point+='0'*(2*int(prec.val)-len(self.after_point))
         self.operand_str=self.before_point + self.after_point
-        
         self.fig,self.ax=plt.subplots()
+        self.fig.canvas.set_window_title('Meh!')
 
         self.ax.set_axis_off()
+        self.fig.set_frameon(False)
         self.fig.set_size_inches(10,10)
         self.axes_pos=self.ax.get_position()
         self.figure_size=self.fig.get_size_inches()
@@ -204,7 +206,7 @@ class solution_zone:
         self.ax.add_table(self.tab)
         self.draw_ref=self.fig.canvas.mpl_connect('draw_event',self.draw_handler)
 
-        plt.show()
+        self.fig.show()
 import re
 class numeric_field:
     def __init__(self, inp_ax, label, regexp, maxlen, decpoint=None):
@@ -250,7 +252,8 @@ class input_zone:
         self.submit.on_clicked(self.click_func)
         plt.show()
 
-        
+#mpl.use('TkAgg')
+mpl.rcParams['toolbar']='None'
 input_zone();
 
 
